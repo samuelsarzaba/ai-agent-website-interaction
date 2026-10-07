@@ -1,0 +1,14 @@
+banner:
+  [e1] link "Tiny Shop"
+  navigation "Main":
+    [e2] link "Products"
+    [e3] link "Cart (3)"
+main:
+  [e56] link "Back to products"
+  # Ceramic Mug
+  Kitchen · Glazed stoneware, 350 ml
+  $12.00
+  In cart: 2
+  [e57] button "Add to cart"
+contentinfo:
+  © Tiny Shop (prototype)

@@ -1,0 +1,14 @@
+banner:
+  [e1] link "Tiny Shop"
+  navigation "Main":
+    [e2] link "Products"
+    [e3] link "Cart (3)"
+main:
+  # Cart
+  list "Cart items":
+    * Ceramic Mug | $12.00 each | [e58] spinbutton "Quantity, Ceramic Mug"="2" | $24.00 | [e59] button "Remove Ceramic Mug" (confirm: "Remove Ceramic Mug from cart")
+    * Linen Tea Towels | $14.00 each | [e60] spinbutton "Quantity, Linen Tea Towels"="1" | $14.00 | [e61] button "Remove Linen Tea Towels" (confirm: "Remove Linen Tea Towels from cart")
+  Total: $38.00
+  [e62] button "Checkout" (confirm: "Place order for $38.00")
+contentinfo:
+  © Tiny Shop (prototype)
