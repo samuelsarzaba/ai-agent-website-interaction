@@ -74,6 +74,7 @@ export default function AgentPanel() {
     sock.onclose = () => {
       setClosed(true);
       setBusy(false);
+      for (const id of [...confirms.current.keys()]) decide(id, null);
       push({ kind: 'error', text: 'Disconnected. Reload the page to start a new chat.' });
     };
     return () => sock.close();
