@@ -47,6 +47,8 @@ the spec's full samples), refs, settle, the confirm hold, tool results/errors/ti
 | `src/Shop.jsx` | The shop: products, product and cart pages |
 | `src/AgentPanel.jsx` | Chat and debug panels |
 | `src/catalog.js` | The fixed 24-product catalogue |
+| `src/components/ui/` | shadcn/ui components (Tailwind v4; add more with `npx shadcn@latest add <name>`) |
 
 Standing UI rules for new shop features: use accessible controls with names, set `aria-busy="true"` on a
-region while it loads, key lists by entity id, and put `data-agent-confirm="<label>"` on risky elements.
+region while it loads, key lists by entity id, and put `data-agent-confirm="<label>"` on risky elements. Dropdowns are shadcn `Select`s inside a `<form>`: the runtime
+reads and drives them through the hidden native `<select>` Radix renders beside the trigger.
