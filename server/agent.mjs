@@ -1,5 +1,5 @@
 // The agent: a Pi session per WebSocket connection, whose three tools are executed by the browser.
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { InMemoryCredentialStore } from '@earendil-works/pi-ai';
@@ -36,6 +36,7 @@ export const MAX_TOOL_CALLS = 15;
 export const STOPPED = 'Stopped by user';
 export const TIMEOUT_MSG = 'The page did not finish this action within 10 s (the tab may be frozen). It may or may not have taken effect.';
 export const DECLINED_MSG = 'Not executed: the user declined a confirmation earlier in this request. Stop and reply to the user.';
+export const STOP_NOTE = '(The user pressed Stop on the previous request; do not redo it.)';
 export const LIMIT_MSG = 'Not executed: the 15-action limit for this request is reached. Stop and tell the user how far you got.';
 
 // Pi 1.0.4 has no DeepInfra provider; register one in code (no config files, no on-disk credentials).
@@ -138,24 +139,33 @@ export async function createAgentConnection({ send, modelRuntime, model, thinkin
     } else if (e.type === 'tool_execution_start') log(`tool ${e.toolName} ${JSON.stringify(e.args)}`);
   });
 
+  let running = false, stopped = false;
   return {
     session,
     async handle(msg) {
       if (msg.type === 'user') {
         bridge.newRequest();
+        const note = stopped ? `${STOP_NOTE}\n\n` : '';
+        running = true; stopped = false;
         try {
-          await session.prompt(`${msg.text}\n\n${msg.snapshot}`);
+          await session.prompt(`${note}${msg.text}\n\n${msg.snapshot}`);
           send({ type: 'done' });
         } catch (e) {
           send({ type: 'done', error: e.message });
+        } finally {
+          running = false;
         }
-      } else if (msg.type === 'stop') await session.abort();
+      } else if (msg.type === 'stop') {
+        if (running) stopped = true;
+        await session.abort();
+      }
       else bridge.handle(msg);
     },
     async close() {
       bridge.rejectAll();
       await session.abort();
       session.dispose();
+      rmSync(scratch, { recursive: true, force: true });
     },
   };
 }

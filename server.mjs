@@ -22,9 +22,12 @@ http.on('request', (req, res) => {
   }, 150);
 });
 
+const sameOrigin = (req) => { try { return new URL(req.headers.origin).host === req.headers.host; } catch { return false; } };
 const wss = new WebSocketServer({ noServer: true });
 http.on('upgrade', (req, socket, head) => {
-  if (new URL(req.url, 'http://localhost').pathname === '/agent') wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws));
+  if (new URL(req.url, 'http://localhost').pathname !== '/agent') return;
+  if (!sameOrigin(req)) return socket.destroy();
+  wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws));
 });
 
 wss.on('connection', async (ws) => {
@@ -33,7 +36,11 @@ wss.on('connection', async (ws) => {
   const queue = [];
   let conn;
   const dispatch = (msg) => conn.handle(msg).catch((e) => log(`error: ${e.message}`));
-  ws.on('message', (data) => { const msg = JSON.parse(data); conn ? dispatch(msg) : queue.push(msg); });
+  ws.on('message', (data) => {
+    let msg;
+    try { msg = JSON.parse(data); } catch { return log('ignored a non-JSON message'); }
+    conn ? dispatch(msg) : queue.push(msg);
+  });
   ws.on('close', () => conn?.close());
   conn = await createAgentConnection({ send, modelRuntime, model, thinkingLevel: THINKING, log });
   if (ws.readyState !== ws.OPEN) return conn.close();

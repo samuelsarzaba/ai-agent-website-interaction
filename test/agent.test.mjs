@@ -2,7 +2,7 @@
 import { fauxAssistantMessage, fauxProvider, fauxText, fauxToolCall, InMemoryCredentialStore } from '@earendil-works/pi-ai';
 import { ModelRuntime } from '@earendil-works/pi-coding-agent';
 import { expect, test } from 'vitest';
-import { createAgentConnection, createToolBridge, DECLINED_MSG, LIMIT_MSG, STOPPED, TIMEOUT_MSG } from '../server/agent.mjs';
+import { createAgentConnection, createToolBridge, DECLINED_MSG, LIMIT_MSG, STOP_NOTE, STOPPED, TIMEOUT_MSG } from '../server/agent.mjs';
 
 const SNAP = 'main:\n  # Products';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -178,6 +178,7 @@ test('session: Stop during a pending confirm cancels it, ends the run, and the n
 
   await conn.handle({ type: 'user', text: 'hi', snapshot: SNAP });
   expect(JSON.stringify(context)).toContain(STOPPED);
+  expect(conn.session.messages.filter((m) => m.role === 'user').at(-1).content[0].text).toBe(`${STOP_NOTE}\n\nhi\n\n${SNAP}`);
   expect(sent.at(-1)).toEqual({ type: 'done' });
 });
 
@@ -190,6 +191,14 @@ test('session: Stop while the model is streaming', async () => {
   await run;
   expect(sent.at(-1).type).toBe('done');
   expect(sent.filter((m) => m.type === 'delta').map((m) => m.text).join('').length).toBeLessThan(40);
+
+  let context;
+  faux.setResponses([(ctx) => { context = ctx; return fauxAssistantMessage('ok'); }, fauxAssistantMessage('ok')]);
+  await conn.handle({ type: 'user', text: 'something else', snapshot: SNAP });
+  expect(JSON.stringify(context)).toContain(JSON.stringify(`${STOP_NOTE}\n\nsomething else`).slice(1, -1));
+  await conn.handle({ type: 'stop' }); // idle: no run to stop
+  await conn.handle({ type: 'user', text: 'again', snapshot: SNAP });
+  expect(conn.session.messages.filter((m) => m.role === 'user').at(-1).content[0].text).toBe(`again\n\n${SNAP}`);
 });
 
 test('close: pending tool waiters reject and the session is aborted', async () => {

@@ -154,7 +154,8 @@ export function settle({ quiet = 200, max = 3000 } = {}) {
   return new Promise((res) => {
     const t0 = performance.now();
     let last = t0;
-    const mo = new MutationObserver((recs) => { if (recs.some((r) => !ignored(r.target))) last = performance.now(); });
+    const skip = (r) => ignored(r.target) || (r.type === 'childList' && [...r.addedNodes, ...r.removedNodes].every(ignored));
+    const mo = new MutationObserver((recs) => { if (!recs.every(skip)) last = performance.now(); });
     mo.observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
     const tick = () => {
       const now = performance.now();

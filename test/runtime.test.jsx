@@ -3,7 +3,7 @@ import './setup-dom.js';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { beforeAll, expect, test } from 'vitest';
-import { runTool, settle, snapshot } from '../src/runtime.js';
+import { doType, runTool, settle, snapshot } from '../src/runtime.js';
 import Shop from '../src/Shop.jsx';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = false;
@@ -35,6 +35,15 @@ test('type with submit applies the search at once', async () => {
   const { r } = await tool('type', { ref: ref('searchbox "Search"'), text: '', submit: true });
   expect(r.ok).toBe(true);
   expect(r.snapshot).toContain('status: 24 products');
+});
+
+test('typing and erasing within the debounce does not leave the list busy', async () => {
+  const box = document.querySelector('input[type="search"]');
+  doType(box, 'a');
+  doType(box, '');
+  const r = await settle({ max: 1500 });
+  expect(r.timedOut).toBe(false);
+  expect(snapshot()).toContain('status: 24 products');
 });
 
 test('select sets the option by visible text and re-sorts', async () => {
@@ -77,6 +86,18 @@ test('settle reports timedOut at the cap while a region stays aria-busy, and ign
   clearInterval(chatTicker);
   busy.remove();
   expect(r2.timedOut).toBe(false);
+});
+
+test('settle ignores ignored overlays added and removed directly under body', async () => {
+  const flicker = setInterval(() => {
+    const box = document.createElement('div');
+    box.setAttribute('data-agent-ignore', '');
+    document.body.append(box);
+    setTimeout(() => box.remove(), 10);
+  }, 40);
+  const r = await settle({ max: 1000 });
+  clearInterval(flicker);
+  expect(r.timedOut).toBe(false);
 });
 
 test('confirm hold: decline clicks nothing', async () => {

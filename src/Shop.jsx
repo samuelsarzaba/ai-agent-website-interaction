@@ -77,28 +77,27 @@ function ProductsPage({ cart, add }) {
   const [category, setCategory] = useState('All');
   const [sort, setSort] = useState('Featured');
   const [list, setList] = useState([]);
-  const [busy, setBusy] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const busy = loading || q !== applied;
   const debounce = useRef();
 
   useEffect(() => {
     let live = true;
-    setBusy(true);
+    setLoading(true);
     fetch(`/api/products?${new URLSearchParams({ q: applied, category, sort })}`)
       .then((r) => r.json())
-      .then((items) => { if (live) { setList(items); setBusy(false); } });
+      .then((items) => { if (live) { setList(items); setLoading(false); } });
     return () => { live = false; };
   }, [applied, category, sort]);
 
   const onSearch = (value) => {
     setQ(value);
-    setBusy(true);
     clearTimeout(debounce.current);
     debounce.current = setTimeout(() => setApplied(value), 250);
   };
   const submit = (e) => {
     e.preventDefault();
     clearTimeout(debounce.current);
-    if (q === applied) setBusy(false);
     setApplied(q);
   };
 
