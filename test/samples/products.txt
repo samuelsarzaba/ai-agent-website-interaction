@@ -1,0 +1,40 @@
+banner:
+  [e1] link "Tiny Shop"
+  navigation "Main":
+    [e2] link "Products"
+    [e3] link "Cart (3)"
+main:
+  # Products
+  search "Products":
+    [e4] searchbox "Search" = ""
+    [e5] button "Search"
+    [e6] combobox "Category" = "All" options: All | Kitchen | Home | Garden | Office
+    [e7] combobox "Sort by" = "Featured" options: Featured | Price: low to high | Price: high to low | Name: A to Z
+  status: 24 products
+  list "Products":
+    * Ceramic Mug | [e8] link "Ceramic Mug" | Kitchen · Glazed stoneware, 350 ml | $12.00 | In cart: 2 | [e9] button "Add to cart"
+    * Chef's Knife | [e10] link "Chef's Knife" | Kitchen · 20 cm carbon steel blade | $34.00 | [e11] button "Add to cart"
+    * Wooden Spoon Set | [e12] link "Wooden Spoon Set" | Kitchen · Three beech spoons | $9.50 | [e13] button "Add to cart"
+    * Cast Iron Skillet | [e14] link "Cast Iron Skillet" | Kitchen · Pre-seasoned, 26 cm | $39.00 | [e15] button "Add to cart"
+    * Glass Storage Jars | [e16] link "Glass Storage Jars" | Kitchen · Set of four, airtight lids | $24.00 | [e17] button "Add to cart"
+    * Linen Tea Towels | [e18] link "Linen Tea Towels" | Kitchen · Pack of two, stonewashed | $14.00 | In cart: 1 | [e19] button "Add to cart"
+    * Throw Blanket | [e20] link "Throw Blanket" | Home · Wool blend, 130 x 170 cm | $45.00 | [e21] button "Add to cart"
+    * Scented Candle | [e22] link "Scented Candle" | Home · Cedar and fig, 40 h burn | $18.00 | [e23] button "Add to cart"
+    * Table Lamp | [e24] link "Table Lamp" | Home · Brass base, linen shade | $42.00 | [e25] button "Add to cart"
+    * Photo Frame | [e26] link "Photo Frame" | Home · Oak, fits 13 x 18 cm | $15.00 | [e27] button "Add to cart"
+    * Wall Clock | [e28] link "Wall Clock" | Home · Silent sweep movement | $29.00 | [e29] button "Add to cart"
+    * Cushion Cover | [e30] link "Cushion Cover" | Home · Cotton, 45 x 45 cm | $16.00 | [e31] button "Add to cart"
+    * Watering Can | [e32] link "Watering Can" | Garden · Galvanised steel, 5 l | $22.00 | [e33] button "Add to cart"
+    * Pruning Shears | [e34] link "Pruning Shears" | Garden · Bypass blades, locking | $19.00 | [e35] button "Add to cart"
+    * Plant Pot Set | [e36] link "Plant Pot Set" | Garden · Three terracotta pots | $27.00 | [e37] button "Add to cart"
+    * Garden Gloves | [e38] link "Garden Gloves" | Garden · Leather palm, size M | $11.00 | [e39] button "Add to cart"
+    * Bird Feeder | [e40] link "Bird Feeder" | Garden · Hanging, squirrel-proof | $25.00 | [e41] button "Add to cart"
+    * Seed Starter Kit | [e42] link "Seed Starter Kit" | Garden · Tray, lid and 24 pellets | $13.00 | [e43] button "Add to cart"
+    * Dot Grid Notebook | [e44] link "Dot Grid Notebook" | Office · A5, 160 pages | $8.00 | [e45] button "Add to cart"
+    * Desk Organizer | [e46] link "Desk Organizer" | Office · Bamboo, five compartments | $21.00 | [e47] button "Add to cart"
+    * Gel Pens | [e48] link "Gel Pens" | Office · Pack of ten, 0.5 mm | $7.00 | [e49] button "Add to cart"
+    * Monitor Stand | [e50] link "Monitor Stand" | Office · Walnut, with drawer | $38.00 | [e51] button "Add to cart"
+    * Sticky Notes | [e52] link "Sticky Notes" | Office · Six pastel pads | $5.00 | [e53] button "Add to cart"
+    * Laptop Sleeve | [e54] link "Laptop Sleeve" | Office · Felt, fits 14 inch | $32.00 | [e55] button "Add to cart"
+contentinfo:
+  © Tiny Shop (prototype)

@@ -1,0 +1,53 @@
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; }
+body { font: 15px/1.4 system-ui, sans-serif; color: #222; background: #fafafa; }
+button { font: inherit; cursor: pointer; }
+
+.layout { display: grid; grid-template-columns: 1fr 360px 480px; height: 100%; }
+.layout > * { overflow: auto; min-height: 0; }
+
+/* Shop */
+.shop { padding: 0 24px; background: #fff; }
+.header { display: flex; align-items: center; gap: 24px; padding: 12px 0; border-bottom: 1px solid #ddd; }
+.header nav { display: flex; gap: 16px; }
+.header [aria-current='page'] { font-weight: 600; }
+.brand { font-weight: 700; font-size: 18px; color: inherit; text-decoration: none; }
+.toast { margin: 0 0 0 auto; color: #2a6b2a; }
+.filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.grid { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+.grid[aria-busy='true'] { opacity: 0.5; }
+.card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; height: 100%; }
+.card img, .detail img { width: 100%; max-width: 320px; border-radius: 4px; }
+.card h2 { font-size: 16px; margin: 8px 0 4px; }
+.card p { margin: 4px 0; }
+.price { font-weight: 600; }
+.cart { list-style: none; padding: 0; }
+.cart li { display: grid; grid-template-columns: 1fr auto auto auto auto; gap: 16px; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+.cart input { width: 56px; margin-left: 4px; }
+footer { margin: 32px 0 16px; color: #888; font-size: 13px; }
+
+/* Chat */
+.chat { display: flex; flex-direction: column; border-left: 1px solid #ddd; background: #f4f4f6; overflow: hidden; }
+.chat h2, .debug h2 { font-size: 15px; margin: 0; padding: 12px; border-bottom: 1px solid #ddd; }
+.messages { flex: 1; overflow: auto; list-style: none; margin: 0; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.msg { white-space: pre-wrap; max-width: 90%; }
+.msg.user { align-self: flex-end; background: #2b5fd9; color: #fff; padding: 8px 10px; border-radius: 10px; }
+.msg.agent { background: #fff; padding: 8px 10px; border-radius: 10px; border: 1px solid #e2e2e2; }
+.msg.tool { font: 12px/1.3 ui-monospace, monospace; color: #555; max-width: 100%; }
+.msg.tool.failed, .msg.error { color: #b00020; }
+.msg.muted { color: #888; font-style: italic; }
+.msg.confirm { background: #fff4d6; border: 1px solid #e0b64a; padding: 8px 10px; border-radius: 10px; }
+.msg.confirm .actions { display: flex; gap: 8px; margin-top: 6px; }
+.msg.confirm .state { margin-top: 4px; font-style: italic; }
+.composer { display: flex; gap: 8px; padding: 12px; border-top: 1px solid #ddd; }
+.composer textarea { flex: 1; font: inherit; resize: none; }
+
+/* Debug */
+.debug { border-left: 1px solid #ddd; background: #fff; font-size: 13px; }
+.debug > :not(h2) { margin: 8px 12px; }
+.debug h3 { font-size: 13px; margin-top: 16px; }
+.debug pre { white-space: pre-wrap; font-size: 11px; background: #f6f6f6; padding: 8px; }
+.legend { color: #666; }
+.calls { font-size: 12px; padding-left: 20px; }
+
+.agent-highlight { position: fixed; outline: 3px solid #f08c00; border-radius: 3px; pointer-events: none; z-index: 1000; }
