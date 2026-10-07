@@ -22,6 +22,10 @@ function refFor(el, role, name) {
   refs.set(m.ref, new WeakRef(el));
   return m.ref;
 }
+// A shadcn (Radix) Select trigger is a button[role=combobox]; inside a form Radix renders an aria-hidden
+// native <select> beside it, which carries the value and options and forwards change events to Radix.
+const nativeSelect = (el) =>
+  el.tagName === 'SELECT' ? el : el.getAttribute('role') === 'combobox' ? el.parentElement?.querySelector('select') : null;
 const visible = (el) => el.checkVisibility({ visibilityProperty: true });
 const clip = (s, n) => (s.length > n ? s.slice(0, n) + '…' : s);
 const q = (s) => JSON.stringify(s);
@@ -40,7 +44,8 @@ function buildTree(root) {
       if (el.disabled || el.getAttribute('aria-disabled') === 'true') n.disabled = true;
       if (el.dataset.agentConfirm) n.confirm = el.dataset.agentConfirm;
       if (['textbox', 'searchbox', 'spinbutton'].includes(role)) n.value = el.value ?? '';
-      if (el.tagName === 'SELECT') { n.value = el.selectedOptions[0]?.text ?? ''; n.options = [...el.options].map((o) => o.text); }
+      const sel = nativeSelect(el);
+      if (sel) { n.value = sel.selectedOptions[0]?.text ?? ''; n.options = [...sel.options].map((o) => o.text).filter(Boolean); }
       if (INTERACTIVE.has(role)) n.ref = refFor(el, role, name);
       into.push(n);
       if (INTERACTIVE.has(role) || role === 'img') return;
@@ -136,8 +141,9 @@ export function doType(el, text, submit) {
   }
 }
 
-export function doSelect(el, option) {
-  if (el.tagName !== 'SELECT') throw new Error('element is not a dropdown');
+export function doSelect(trigger, option) {
+  const el = nativeSelect(trigger);
+  if (!el) throw new Error('element is not a dropdown');
   const opt = [...el.options].find((x) => x.text.trim() === option || x.value === option);
   if (!opt) throw new Error(`option "${option}" not in [${[...el.options].map((x) => x.text).join(', ')}]`);
   setNativeValue(el, opt.value);

@@ -1,15 +1,22 @@
 // Tiny Shop: a hash-routed shop. Standing UI rules: accessible controls, aria-busy while loading,
 // list keys are entity ids, risky elements carry data-agent-confirm, product cards show "In cart: N".
 import { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, Check, Plus, Search, ShoppingBag, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CATEGORIES, SORTS, byId } from './catalog.js';
 
 const money = (n) => `$${n.toFixed(2)}`;
-const COLORS = { Kitchen: '#e8c9a0', Home: '#c9d6e8', Garden: '#c4e0b8', Office: '#ddd0ea' };
+const COLORS = { Kitchen: ['#fbeee0', '#9a5b13'], Home: ['#e6eefb', '#2c4f8f'], Garden: ['#e5f3df', '#2f6b25'], Office: ['#efe8f8', '#5b3f8c'] };
 const image = (p) =>
   'data:image/svg+xml,' +
   encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="120"><rect width="160" height="120" fill="${COLORS[p.category]}"/>` +
-      `<text x="80" y="76" font-family="sans-serif" font-size="48" text-anchor="middle" fill="#333">${p.name[0]}</text></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="144"><rect width="240" height="144" fill="${COLORS[p.category][0]}"/>` +
+      `<text x="120" y="88" font-family="sans-serif" font-size="44" font-weight="600" text-anchor="middle" fill="${COLORS[p.category][1]}">${p.name[0]}</text></svg>`,
   );
 
 function useHash() {
@@ -49,27 +56,40 @@ export default function Shop() {
 
   return (
     <>
-      <header className="header">
-        <a className="brand" href="#/">Tiny Shop</a>
-        <nav aria-label="Main">
-          <a href="#/" aria-current={page === 'products' ? 'page' : undefined}>Products</a>
-          <a href="#/cart" aria-current={page === 'cart' ? 'page' : undefined}>Cart ({count})</a>
+      <header className="sticky top-0 z-10 flex flex-wrap items-center gap-4 border-b bg-background/90 py-3 backdrop-blur">
+        <a className="flex items-center gap-2 text-base font-bold tracking-tight" href="#/">
+          <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <ShoppingBag className="size-4" aria-hidden="true" />
+          </span>
+          Tiny Shop
+        </a>
+        <nav aria-label="Main" className="flex gap-1">
+          <a href="#/" aria-current={page === 'products' ? 'page' : undefined} className={navLink}>Products</a>
+          <a href="#/cart" aria-current={page === 'cart' ? 'page' : undefined} aria-label={`Cart (${count})`} className={navLink}>
+            Cart <Badge className="rounded-full px-1.5">{count}</Badge>
+          </a>
         </nav>
-        <p role="status" className="toast">{toast}</p>
+        <p role="status" className="ml-auto flex items-center gap-2 text-sm">
+          {toast && <Check className="size-4 text-green-700" aria-hidden="true" />}
+          {toast}
+        </p>
       </header>
-      <main>
+      <main className="flex max-w-5xl flex-col gap-6 py-8">
         {page === 'products' && <ProductsPage cart={cart} add={add} />}
         {page === 'product' && <ProductPage product={byId[productId]} cart={cart} add={add} />}
         {page === 'cart' && (
           <CartPage cart={cart} total={total} order={order} setQty={setQty} remove={remove} checkout={checkout} />
         )}
       </main>
-      <footer>
+      <footer className="border-t py-4 text-sm text-muted-foreground">
         <p>© Tiny Shop (prototype)</p>
       </footer>
     </>
   );
 }
+
+const navLink = 'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground aria-[current=page]:bg-accent aria-[current=page]:text-foreground';
+const h1 = 'text-3xl font-bold tracking-tight';
 
 function ProductsPage({ cart, add }) {
   const [q, setQ] = useState('');
@@ -103,28 +123,34 @@ function ProductsPage({ cart, add }) {
 
   return (
     <>
-      <h1>Products</h1>
-      <form role="search" aria-label="Products" className="filters" onSubmit={submit}>
-        <label>Search <input type="search" value={q} onChange={(e) => onSearch(e.target.value)} /></label>
-        <button>Search</button>
-        <label>Category <select value={category} onChange={(e) => setCategory(e.target.value)}>
-          {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-        </select></label>
-        <label>Sort by <select value={sort} onChange={(e) => setSort(e.target.value)}>
-          {SORTS.map((s) => <option key={s}>{s}</option>)}
-        </select></label>
+      <h1 className={h1}>Products</h1>
+      <form role="search" aria-label="Products" className="flex flex-wrap items-end gap-3 rounded-xl border bg-muted/40 p-4" onSubmit={submit}>
+        <div className="flex min-w-48 flex-1 flex-col gap-1.5">
+          <Label htmlFor="q">Search</Label>
+          <div className="relative">
+            <Search className="absolute top-2.5 left-3 size-4 text-muted-foreground" aria-hidden="true" />
+            <Input id="q" type="search" className="bg-background pl-9" placeholder="Search products…" value={q} onChange={(e) => onSearch(e.target.value)} />
+          </div>
+        </div>
+        <Button>Search</Button>
+        <Dropdown label="Category" value={category} onChange={setCategory} options={CATEGORIES} />
+        <Dropdown label="Sort by" value={sort} onChange={setSort} options={SORTS} />
       </form>
-      <p role="status">{busy ? 'Loading…' : `${list.length} products`}</p>
-      <ul aria-label="Products" aria-busy={busy} className="grid">
+      <p role="status" className="text-sm text-muted-foreground">{busy ? 'Loading…' : `${list.length} products`}</p>
+      <ul aria-label="Products" aria-busy={busy} className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 transition-opacity aria-busy:opacity-50">
         {list.map((p) => (
           <li key={p.id}>
-            <article aria-labelledby={`title-${p.id}`} className="card">
-              <img src={image(p)} alt={p.name} />
-              <h2 id={`title-${p.id}`}><a href={`#/product/${p.id}`}>{p.name}</a></h2>
-              <p>{p.category} · {p.blurb}</p>
-              <p className="price">{money(p.price)}</p>
-              {cart[p.id] > 0 && <p>In cart: {cart[p.id]}</p>}
-              <button onClick={() => add(p.id)}>Add to cart</button>
+            <article aria-labelledby={`title-${p.id}`} className="flex h-full flex-col overflow-hidden rounded-xl border bg-card shadow-sm">
+              <img src={image(p)} alt={p.name} className="h-36 w-full object-cover" />
+              <div className="flex flex-1 flex-col gap-1.5 p-4">
+                <h2 id={`title-${p.id}`} className="font-semibold tracking-tight"><a href={`#/product/${p.id}`} className="hover:underline">{p.name}</a></h2>
+                <p className="text-sm text-muted-foreground">{p.category} · {p.blurb}</p>
+                <div className="mt-auto flex flex-wrap items-center gap-2 pt-2">
+                  <p className="text-base font-semibold">{money(p.price)}</p>
+                  {cart[p.id] > 0 && <Badge>In cart: {cart[p.id]}</Badge>}
+                  <Button variant="outline" size="sm" className="ml-auto" onClick={() => add(p.id)}><Plus aria-hidden="true" />Add to cart</Button>
+                </div>
+              </div>
             </article>
           </li>
         ))}
@@ -133,21 +159,40 @@ function ProductsPage({ cart, add }) {
   );
 }
 
+function Dropdown({ label, value, onChange, options }) {
+  const id = label.toLowerCase().replace(/\W+/g, '-');
+  return (
+    <div className="flex w-44 flex-col gap-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger id={id} className="w-full bg-background"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 function ProductPage({ product: p, cart, add }) {
   return (
     <>
-      <a href="#/">Back to products</a>
+      <a href="#/" className="flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="size-4" aria-hidden="true" />Back to products
+      </a>
       {p ? (
-        <article className="detail">
-          <img src={image(p)} alt={p.name} />
-          <h1>{p.name}</h1>
-          <p>{p.category} · {p.blurb}</p>
-          <p className="price">{money(p.price)}</p>
-          {cart[p.id] > 0 && <p>In cart: {cart[p.id]}</p>}
-          <button onClick={() => add(p.id)}>Add to cart</button>
+        <article className="flex flex-wrap gap-8">
+          <img src={image(p)} alt={p.name} className="w-full max-w-sm rounded-xl border" />
+          <div className="flex flex-col items-start gap-3">
+            <h1 className={h1}>{p.name}</h1>
+            <p className="text-muted-foreground">{p.category} · {p.blurb}</p>
+            <p className="text-2xl font-semibold">{money(p.price)}</p>
+            {cart[p.id] > 0 && <Badge>In cart: {cart[p.id]}</Badge>}
+            <Button onClick={() => add(p.id)}><Plus aria-hidden="true" />Add to cart</Button>
+          </div>
         </article>
       ) : (
-        <h1>Product not found</h1>
+        <h1 className={h1}>Product not found</h1>
       )}
     </>
   );
@@ -157,32 +202,34 @@ function CartPage({ cart, total, order, setQty, remove, checkout }) {
   const lines = Object.entries(cart);
   return (
     <>
-      <h1>Cart</h1>
-      {order && <p role="alert">Order #{order} placed. Thank you!</p>}
+      <h1 className={h1}>Cart</h1>
+      {order && <p role="alert" className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-900"><Check className="size-4" aria-hidden="true" />Order #{order} placed. Thank you!</p>}
       {lines.length === 0 ? (
-        <p>Your cart is empty.</p>
+        <p className="text-muted-foreground">Your cart is empty.</p>
       ) : (
-        <>
-          <ul aria-label="Cart items" className="cart">
+        <div className="flex flex-wrap items-start gap-6">
+          <ul aria-label="Cart items" className="flex-[999_1_560px] divide-y rounded-xl border">
             {lines.map(([id, n]) => {
               const p = byId[id];
               return (
-                <li key={id}>
-                  <span>{p.name}</span>
-                  <span>{money(p.price)} each</span>
-                  <label>Quantity <input type="number" min="1" max="10" aria-label={`Quantity, ${p.name}`} value={n}
+                <li key={id} className="flex flex-wrap items-center gap-4 p-4">
+                  <span className="min-w-32 flex-1 font-semibold">{p.name}</span>
+                  <span className="text-sm text-muted-foreground">{money(p.price)} each</span>
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground">Quantity <Input type="number" min="1" max="10" className="h-8 w-16" aria-label={`Quantity, ${p.name}`} value={n}
                     onChange={(e) => { const v = parseInt(e.target.value, 10); if (v) setQty(id, v); }} /></label>
-                  <span>{money(p.price * n)}</span>
-                  <button aria-label={`Remove ${p.name}`} data-agent-confirm={`Remove ${p.name} from cart`} onClick={() => remove(id)}>
-                    Remove
-                  </button>
+                  <span className="w-20 text-right font-semibold tabular-nums">{money(p.price * n)}</span>
+                  <Button variant="ghost" size="icon" aria-label={`Remove ${p.name}`} data-agent-confirm={`Remove ${p.name} from cart`} onClick={() => remove(id)}>
+                    <Trash2 aria-hidden="true" />
+                  </Button>
                 </li>
               );
             })}
           </ul>
-          <p>Total: <strong>{money(total)}</strong></p>
-          <button data-agent-confirm={`Place order for ${money(total)}`} onClick={checkout}>Checkout</button>
-        </>
+          <Card className="ml-auto w-full max-w-sm gap-4 p-5">
+            <p className="flex justify-between text-base">Total: <strong>{money(total)}</strong></p>
+            <Button className="w-full" data-agent-confirm={`Place order for ${money(total)}`} onClick={checkout}>Checkout</Button>
+          </Card>
+        </div>
       )}
     </>
   );

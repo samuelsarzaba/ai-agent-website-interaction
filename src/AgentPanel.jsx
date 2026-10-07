@@ -1,5 +1,10 @@
 // Chat and debug panels. Both carry data-agent-ignore, so they never appear in snapshots.
 import { useEffect, useRef, useState } from 'react';
+import { Bot, Eye, Send, ShieldAlert, Square, SquareTerminal } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from 'cn';
 import { LEGEND, runTool, snapshot } from './runtime.js';
 
 let nextId = 0;
@@ -95,23 +100,47 @@ export default function AgentPanel() {
   };
   const stop = () => { stopped.current = true; send({ type: 'stop' }); };
 
+  const msgClass = {
+    user: 'self-end max-w-[85%] rounded-xl rounded-br-sm bg-primary px-3 py-2 text-primary-foreground',
+    agent: 'self-start max-w-[85%] rounded-xl rounded-bl-sm border bg-background px-3 py-2',
+    tool: 'font-mono text-xs text-muted-foreground',
+    error: 'rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800',
+    muted: 'text-sm italic text-muted-foreground',
+    confirm: 'flex flex-col gap-2.5 rounded-xl border border-amber-300 bg-amber-50 p-3.5',
+  };
+
   return (
     <>
-      <aside aria-label="Shop assistant" className="chat" data-agent-ignore="">
-        <h2>Shop assistant</h2>
-        <ol className="messages">
+      <aside aria-label="Shop assistant" className="flex min-h-[640px] flex-col border-l bg-muted/40" data-agent-ignore="">
+        <div className="flex items-center gap-2.5 border-b bg-background px-4 py-3.5">
+          <span className="flex size-8 items-center justify-center rounded-full border bg-muted"><Bot className="size-4" aria-hidden="true" /></span>
+          <div>
+            <h2 className="text-sm font-semibold">Shop assistant</h2>
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className={cn('size-2 rounded-full', closed ? 'bg-red-600' : busy ? 'bg-amber-500' : 'bg-green-600')} />
+              {closed ? 'Disconnected' : busy ? 'Working…' : 'Connected'}
+            </p>
+          </div>
+        </div>
+        <ol className="flex flex-1 flex-col gap-2.5 overflow-auto p-4">
           {items.map((x) => (
-            <li key={x.id} className={`msg ${x.kind}${x.error ? ' failed' : ''}`}>
+            <li key={x.id} className={cn('whitespace-pre-wrap', msgClass[x.kind], x.error && 'text-red-700')}>
               {x.kind === 'confirm' ? (
                 <>
-                  <div>The assistant wants to: <strong>{x.label}</strong></div>
+                  <div className="flex gap-2.5">
+                    <ShieldAlert className="mt-0.5 size-4 shrink-0 text-amber-700" aria-hidden="true" />
+                    <div>
+                      <div className="text-xs font-semibold text-amber-900">Approval needed</div>
+                      The assistant wants to: <strong>{x.label}</strong>
+                    </div>
+                  </div>
                   {x.state === 'pending' ? (
-                    <div className="actions">
-                      <button onClick={() => decide(x.toolCallId, true)}>Approve</button>
-                      <button onClick={() => decide(x.toolCallId, false)}>Decline</button>
+                    <div className="flex justify-end gap-2">
+                      <Button size="sm" variant="outline" onClick={() => decide(x.toolCallId, false)}>Decline</Button>
+                      <Button size="sm" onClick={() => decide(x.toolCallId, true)}>Approve</Button>
                     </div>
                   ) : (
-                    <div className="state">{x.state}</div>
+                    <Badge variant="outline" className="self-end">{x.state}</Badge>
                   )}
                 </>
               ) : (
@@ -121,44 +150,63 @@ export default function AgentPanel() {
           ))}
           <li ref={listEnd} aria-hidden="true" />
         </ol>
-        <form className="composer" onSubmit={(e) => { e.preventDefault(); submit(); }}>
-          <textarea aria-label="Message" rows={3} value={draft} disabled={closed} placeholder="Ask the assistant…"
+        <form className="flex flex-col gap-2 border-t bg-background p-4 pt-3" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+          <Textarea aria-label="Message" rows={3} className="resize-none" value={draft} disabled={closed} placeholder="Ask the assistant…"
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); } }} />
-          {busy ? <button type="button" onClick={stop}>Stop</button> : <button disabled={closed}>Send</button>}
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Enter to send · Shift+Enter for newline</span>
+            {busy
+              ? <Button type="button" size="sm" variant="outline" onClick={stop}><Square className="fill-current" aria-hidden="true" />Stop</Button>
+              : <Button size="sm" disabled={closed}>Send<Send aria-hidden="true" /></Button>}
+          </div>
         </form>
       </aside>
-      <section aria-label="Debug" className="debug" data-agent-ignore="">
-        <h2>Debug</h2>
-        <p className="legend">{LEGEND}</p>
-        <button onClick={() => show(snapshot(), 'preview of the current page (not sent)')}>Preview current page</button>
-        <h3>Session usage</h3>
-        <p>
-          {usage.requests} requests · {usage.input} input / {usage.cached} cached / {usage.output} output tokens · $
-          {usage.cost.toFixed(5)}
-        </p>
-        <h3>Snapshot the agent last received</h3>
-        {shown ? (
-          <>
-            <p>
-              Source: {shown.source} · {shown.text.length} chars · ≈{Math.round(shown.text.length / 3.44)} tokens ·{' '}
-              {shown.text.split('\n').length} lines
-            </p>
-            <pre>{shown.text}</pre>
-          </>
-        ) : (
-          <p>None yet.</p>
-        )}
-        <h3>Tool calls</h3>
-        <ol className="calls">
-          {calls.map((c, i) => (
-            <li key={i}>
-              <code>{c.op} {JSON.stringify(c.args)}</code> → {c.r.ok ? 'ok' : `error: ${c.r.error}`}
-              {c.r.settledMs !== undefined && ` · settle ${c.r.settledMs} ms${c.r.timedOut ? ' (TIMED OUT)' : ''}`}
-              {c.r.confirm && ` · confirm ${c.r.confirm}`}
-            </li>
-          ))}
-        </ol>
+      <section aria-label="Debug" className="flex flex-col border-l text-sm" data-agent-ignore="">
+        <div className="flex items-center justify-between gap-2 border-b px-4 py-3.5">
+          <h2 className="flex items-center gap-2 font-semibold"><SquareTerminal className="size-4" aria-hidden="true" />Debug</h2>
+          <Button size="sm" variant="outline" onClick={() => show(snapshot(), 'preview of the current page (not sent)')}>
+            <Eye aria-hidden="true" />Preview current page
+          </Button>
+        </div>
+        <div className="flex flex-col gap-4 p-4">
+          <p className="text-xs text-muted-foreground">{LEGEND}</p>
+          <h3 className="font-semibold">Session usage</h3>
+          <dl className="grid grid-cols-4 gap-2">
+            {[['Requests', usage.requests], ['Input', usage.input], ['Cached', usage.cached], ['Output', usage.output]].map(([k, v]) => (
+              <div key={k} className="rounded-lg border p-2.5">
+                <dt className="text-xs text-muted-foreground">{k}</dt>
+                <dd className="text-base font-semibold tabular-nums">{v}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="text-xs text-muted-foreground">Tokens in/cached/out · cost ${usage.cost.toFixed(5)}</p>
+          <h3 className="font-semibold">Snapshot the agent last received</h3>
+          {shown ? (
+            <>
+              <p className="text-xs text-muted-foreground">
+                Source: {shown.source} · {shown.text.length} chars · ≈{Math.round(shown.text.length / 3.44)} tokens ·{' '}
+                {shown.text.split('\n').length} lines
+              </p>
+              <pre className="max-h-96 overflow-auto rounded-lg bg-zinc-900 p-3 font-mono text-[11px] leading-relaxed whitespace-pre-wrap text-zinc-200">{shown.text}</pre>
+            </>
+          ) : (
+            <p className="text-muted-foreground">None yet.</p>
+          )}
+          <h3 className="font-semibold">Tool calls</h3>
+          <ol className="divide-y rounded-lg border empty:hidden">
+            {calls.map((c, i) => (
+              <li key={i} className="flex items-start justify-between gap-2 px-3 py-2 font-mono text-xs">
+                <span>
+                  {c.op} {JSON.stringify(c.args)}
+                  {c.r.settledMs !== undefined && ` · settle ${c.r.settledMs} ms${c.r.timedOut ? ' (TIMED OUT)' : ''}`}
+                  {c.r.confirm && ` · confirm ${c.r.confirm}`}
+                </span>
+                <Badge variant={c.r.ok ? 'secondary' : 'destructive'} className="shrink-0">{c.r.ok ? 'ok' : `error: ${c.r.error}`}</Badge>
+              </li>
+            ))}
+          </ol>
+        </div>
       </section>
     </>
   );
