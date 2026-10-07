@@ -22,7 +22,9 @@ http.on('request', (req, res) => {
   }, 150);
 });
 
-const sameOrigin = (req) => { try { return new URL(req.headers.origin).host === req.headers.host; } catch { return false; } };
+const sameOrigin = (req) => {
+  try { const o = new URL(req.headers.origin); return o.host === req.headers.host && ['127.0.0.1', 'localhost'].includes(o.hostname); } catch { return false; }
+};
 const wss = new WebSocketServer({ noServer: true });
 http.on('upgrade', (req, socket, head) => {
   if (new URL(req.url, 'http://localhost').pathname !== '/agent') return;
