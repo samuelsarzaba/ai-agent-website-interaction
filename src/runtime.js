@@ -49,7 +49,7 @@ function buildTree(root) {
       if (INTERACTIVE.has(role)) n.ref = refFor(el, role, name);
       into.push(n);
       if (INTERACTIVE.has(role) || role === 'img') return;
-      if (!el.children.length) { const t = el.textContent.trim(); if (t && t !== name) n.text = clip(t, 120); else if (!name) into.pop(); return; }
+      if (![...el.children].some((c) => !isInaccessible(c))) { const t = el.textContent.trim(); if (t && t !== name) n.text = clip(t, 120); else if (!name) into.pop(); return; }
       n.children = [];
       into = n.children;
     } else if (!el.children.length || !el.querySelector(HAS_ROLE)) { // pure text run, e.g. <p>Total: <b>$5</b></p>
@@ -125,6 +125,7 @@ function setNativeValue(el, value) {
 
 export function doClick(el) {
   if (el.disabled) throw new Error('element is disabled');
+  if (el.tagName !== 'SELECT' && nativeSelect(el)) throw new Error('element is a dropdown; use select');
   el.scrollIntoView({ block: 'center' });
   el.focus({ preventScroll: true });
   el.click();

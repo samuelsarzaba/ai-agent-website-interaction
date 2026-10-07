@@ -60,6 +60,10 @@ test('select fails with the valid options on a miss', async () => {
   expect(sent).toEqual(['tool_result']);
 });
 
+test('clicking a dropdown fails and points at select', async () => {
+  expect((await tool('click', { ref: ref('combobox "Sort by"') })).r.error).toBe('element is a dropdown; use select');
+});
+
 test('wrong element types, stale refs and disabled elements fail loudly', async () => {
   expect((await tool('type', { ref: ref('link "Tiny Shop"'), text: 'x' })).r.error).toBe('element is not a text field');
   expect((await tool('select', { ref: ref('link "Tiny Shop"'), option: 'x' })).r.error).toBe('element is not a dropdown');
@@ -130,4 +134,11 @@ test('confirm hold: the ref is re-resolved after approval', async () => {
     askUser: async () => { document.querySelector('[data-agent-confirm^="Place order"]').remove(); return true; },
   });
   expect(r).toMatchObject({ ok: false, confirm: 'approved', error: `ref ${checkout} not found; use a ref from the latest snapshot` });
+});
+
+test('the order alert stays on one line past its aria-hidden icon', async () => {
+  await tool('click', { ref: ref('link "Tiny Shop"') }); // remount the cart: the test above removed its Checkout button
+  await tool('click', { ref: ref('link "Cart \\(\\d+\\)"') });
+  const { r } = await tool('click', { ref: ref('button "Checkout"') });
+  expect(r.snapshot).toMatch(/alert: Order #\S+ placed\. Thank you!/);
 });
