@@ -138,21 +138,16 @@ export async function createAgentConnection({ send, modelRuntime, model, thinkin
     } else if (e.type === 'tool_execution_start') log(`tool ${e.toolName} ${JSON.stringify(e.args)}`);
   });
 
-  let busy = false;
   return {
     session,
     async handle(msg) {
       if (msg.type === 'user') {
-        if (busy) return send({ type: 'done', error: 'A request is already running.' });
-        busy = true;
         bridge.newRequest();
         try {
           await session.prompt(`${msg.text}\n\n${msg.snapshot}`);
           send({ type: 'done' });
         } catch (e) {
           send({ type: 'done', error: e.message });
-        } finally {
-          busy = false;
         }
       } else if (msg.type === 'stop') await session.abort();
       else bridge.handle(msg);

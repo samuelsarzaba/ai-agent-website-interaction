@@ -79,7 +79,7 @@ export default function AgentPanel() {
     return () => sock.close();
   }, []);
 
-  useEffect(() => listEnd.current?.scrollIntoView({ block: 'end' }), [items]);
+  useEffect(() => { listEnd.current?.scrollIntoView({ block: 'end' }); }, [items]);
 
   const submit = () => {
     const text = draft.trim();
@@ -114,7 +114,7 @@ export default function AgentPanel() {
                   )}
                 </>
               ) : (
-                x.text
+                x.text.trim()
               )}
             </li>
           ))}
